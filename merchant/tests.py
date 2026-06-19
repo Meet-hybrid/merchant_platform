@@ -144,9 +144,9 @@ class OrderTests(APITestCase):
         
         url = reverse('order-list')
         data = {
-            'customerName': 'John Doe',
+            'customerName': 'Michael Philip',
             'customerPhone': '1234567890',
-            'customerAddress': '123 Main St',
+            'customerAddress': '312 Herbert Macaulay ',
             'totalPrice': '0.00',
             'items': [
                 {'productVariant': self.variant.id}
@@ -167,7 +167,7 @@ class OrderTests(APITestCase):
         product = Product.objects.create(merchant=self.merchant, name='Pants', price=29.99, category='Clothing', isActive=True)
         variant = ProductVariant.objects.create(product=product, color='Blue', size='L', stock=3)
         order_data = {
-            'customerName': 'Jane Doe',
+            'customerName': 'Meet Hybrid',
             'customerPhone': '555-5555',
             'customerAddress': '456 Park Ave',
             'items': [

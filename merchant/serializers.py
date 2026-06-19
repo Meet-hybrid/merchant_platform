@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 from merchant.models import Merchant, Product, ProductVariant, Order, OrderItem
+from merchant.exceptions import OutOfStockException
 
 class MerchantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +18,19 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+        read_only_fields = ['merchant']
+
+    def validate(self, attrs):
+        name = attrs.get('name')
+        request = self.context.get('request')
+        if request and name:
+            # Database constraint: Enforce unique product name per merchant at the serializer level.
+            queryset = Product.objects.filter(merchant=request.user, name=name)
+            if self.instance:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            if queryset.exists():
+                raise serializers.ValidationError({"name": "A product with this name already exists for your store."})
+        return attrs
 
 class ProductVariantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -55,7 +69,7 @@ class OrderSerializer(serializers.ModelSerializer):
                 
                 # Complex Business Rule: Verify stock availability and decrement count for the ordered item.
                 if locked_variant.stock < 1:
-                    raise serializers.ValidationError(f"Variant {locked_variant.color} - {locked_variant.size} is out of stock.")
+                    raise OutOfStockException(f"Variant {locked_variant.color} - {locked_variant.size} is out of stock.")
                 
                 locked_variant.stock -= 1
                 locked_variant.save()

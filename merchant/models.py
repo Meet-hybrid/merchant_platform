@@ -18,7 +18,6 @@ class Product(models.Model):
     isActive = models.BooleanField(default=True)
 
     class Meta:
-        # Database constraint: Ensures each merchant has unique product names.
         unique_together = ('merchant', 'name')
 
 class ProductVariant(models.Model):
@@ -38,7 +37,6 @@ class ProductVariant(models.Model):
     )
 
     class Meta:
-        # Database constraint: Ensures unique color and size combinations per product.
         unique_together = ('product', 'color', 'size')
 
 class Order(models.Model):

@@ -24,7 +24,6 @@ class ProductSerializer(serializers.ModelSerializer):
         name = attrs.get('name')
         request = self.context.get('request')
         if request and name:
-            # Database constraint: Enforce unique product name per merchant at the serializer level.
             queryset = Product.objects.filter(merchant=request.user, name=name)
             if self.instance:
                 queryset = queryset.exclude(pk=self.instance.pk)
@@ -38,7 +37,6 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_product(self, value):
-        # Complex Business Rule: Verify that the product belongs to the authenticated merchant.
         request = self.context.get('request')
         if request and request.user and value.merchant != request.user:
             raise serializers.ValidationError("You do not have permission to add variants to this product.")
@@ -64,10 +62,8 @@ class OrderSerializer(serializers.ModelSerializer):
             order = Order.objects.create(**validated_data)
             for item in items_data:
                 variant = item['productVariant']
-                # Transactional Lock: Locks the variant row to prevent race conditions during concurrent stock updates.
                 locked_variant = ProductVariant.objects.select_for_update().get(pk=variant.pk)
                 
-                # Complex Business Rule: Verify stock availability and decrement count for the ordered item.
                 if locked_variant.stock < 1:
                     raise OutOfStockException(f"Variant {locked_variant.color} - {locked_variant.size} is out of stock.")
                 
